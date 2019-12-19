@@ -1,4 +1,3 @@
-
 public class LPiece implements Piece {
 	private Point[] points;
 	private char space;
@@ -26,5 +25,12 @@ public class LPiece implements Piece {
 	
 	public Point[] getPoints() {
 		return points;
+	}
+	
+	public void setPoints(Point[] pts) {
+		points = new Point[pts.length];
+		for (int i = 0; i < pts.length; i++) {
+			points[i] = new Point(pts[i].getRow(), pts[i].getCol());
+		}
 	}
 }

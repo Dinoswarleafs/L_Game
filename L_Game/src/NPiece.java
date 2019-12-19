@@ -8,6 +8,13 @@ public class NPiece implements Piece {
 		this.space = space;
 	}
 	
+	public void setPoints(Point[] pts) {
+		points = new Point[pts.length];
+		for (int i = 0; i < pts.length; i++) {
+			points[i] = new Point(pts[i].getRow(), pts[i].getCol());
+		}
+	}
+	
 	public char getSpace() {
 		return space;
 	}

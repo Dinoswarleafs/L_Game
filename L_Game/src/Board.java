@@ -19,6 +19,8 @@ public class Board {
 	private LPiece[] lPieces;
 	private NPiece[] nPieces;
 	private Piece currPicked;
+	private DPiece disPiece;
+	private boolean pHeldDown;
 	
 	public Board(PApplet p) {
 		System.out.println("Initialization board.");
@@ -67,8 +69,55 @@ public class Board {
 		
 	}
 	
+	public void mouseInput(int startX, int startY, int spaceWidth) {
+		if (p.mousePressed) {
+			if (!pHeldDown) {
+				pHeldDown = true;
+				selectPiece(startX, startY, spaceWidth);
+			}
+		} else {
+			if (pHeldDown) {
+				pHeldDown = false;
+				placeDisplayPiece(startX, startY, spaceWidth);
+			}
+		}
+	}
+	
+	private boolean selectPiece(int startX, int startY, int spaceWidth) {
+		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
+		if (currPicked != null && removePiece(pt.getRow(), pt.getCol())) {
+			disPiece = new DPiece(currPicked, pt, (p.mouseY - startY) % spaceWidth, (p.mouseX - startX) % spaceWidth);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean rotatePiece(boolean rotLeft) {
+		if (disPiece != null) {
+			disPiece.rotate(rotLeft);
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean placeDisplayPiece(int startX, int startY, int spaceWidth) {
+		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
+		disPiece.shiftSquares(pt);
+		boolean canPlace = canPlace(disPiece);
+		if (canPlace) {
+			currPicked.setPoints(disPiece.getPoints());
+		}
+		disPiece = null;
+		placeBack();
+		return canPlace;
+	}
+	
 	public boolean canPlace(Piece piece) {
 		System.out.print("Checking if " + piece + " can be placed: ");
+		if (piece == null) {
+			System.out.println("No. Piece detected as null");
+			return false;
+		}
 		Point[] points = piece.getPoints();
 		for (int i = 0; i < points.length; i++) {
 			if (!allChecksPass(piece, points[i])) {
@@ -132,6 +181,7 @@ public class Board {
 		if (!canPlace(piece)) {
 			throw new IllegalArgumentException("placePiece. the piece must be in bounds of the board");
 		}
+		
 		Point[] pts = piece.getPoints();
 		for (int i = 0; i < pts.length; i++) {
 			board[pts[i].getRow()][pts[i].getCol()] = BLANK_SPACE;
@@ -143,6 +193,14 @@ public class Board {
 			for (int col = 0; col < board[row].length; col++) {
 				p.fill(getFillColor(board[row][col]));
 				p.rect(mapToScreen(startX, col, spaceWidth), mapToScreen(startX, row, spaceWidth), spaceWidth, spaceWidth);
+			}
+		}
+		if (disPiece != null) {
+			int[][] displayData = disPiece.getDisplayData();
+			p.fill(getFillColor(disPiece.getSpace()));
+			for (int i = 0; i < displayData.length; i++) {
+				int[] thisData = displayData[i];
+				p.rect((p.mouseX - thisData[3]) + spaceWidth * thisData[1], (p.mouseY - thisData[2]) + spaceWidth * thisData[0], spaceWidth, spaceWidth);
 			}
 		}
 	}
