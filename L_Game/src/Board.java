@@ -85,7 +85,7 @@ public class Board {
 	
 	private boolean selectPiece(int startX, int startY, int spaceWidth) {
 		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
-		if (currPicked != null && removePiece(pt.getRow(), pt.getCol())) {
+		if (currPicked == null && removePiece(pt.getRow(), pt.getCol())) {
 			disPiece = new DPiece(currPicked, pt, (p.mouseY - startY) % spaceWidth, (p.mouseX - startX) % spaceWidth);
 			return true;
 		}
