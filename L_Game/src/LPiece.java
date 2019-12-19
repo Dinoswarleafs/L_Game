@@ -8,6 +8,10 @@ public class LPiece implements Piece {
 		this.space = space;
 	}
 	
+	public LPiece(char space) {
+		this.space = space;
+	}
+	
 	private void initializePoints(int startRow, int startCol, int offRow, int offCol, int deltaRow, int deltaCol) {
 		points[0] = new Point(startRow, startCol);
 		int newRow = startRow + offRow;

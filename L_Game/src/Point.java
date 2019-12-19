@@ -26,4 +26,8 @@ public class Point {
 		Point temp = (Point) other;
 		return temp.getCol() == c && temp.getRow() == r;
 	}
+	
+	public String toString() {
+		return "(" + super.toString() + ": (" + r + "," + c + "))";
+	}
 }

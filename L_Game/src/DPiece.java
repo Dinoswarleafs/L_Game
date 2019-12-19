@@ -37,9 +37,12 @@ public class DPiece implements Piece {
 			Point curr = points[i];
 			int rowMult = rotLeft ? 1 : -1;
 			int colMult = rotLeft ? -1 : 1;
-			int newRow = selectedPoint.getCol() + rowMult * (selectedPoint.getCol() - curr.getCol());
-			int newCol = selectedPoint.getRow() + colMult * (selectedPoint.getRow() - curr.getRow());
+			System.out.print("Rotating pt: " + points[i] + " | ");
+			int newRow = selectedPoint.getRow() + rowMult * (selectedPoint.getCol() - curr.getCol());
+			int newCol = selectedPoint.getCol() + colMult * (selectedPoint.getRow() - curr.getRow());
+			System.out.print(selectedPoint.getCol() - curr.getCol() + ", " + (selectedPoint.getRow() - curr.getRow()) + " | ");
 			points[i] = new Point(newRow, newCol);
+			System.out.println(points[i]);
 		}
 	}
 	

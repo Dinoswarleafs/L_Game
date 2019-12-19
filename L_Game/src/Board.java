@@ -102,14 +102,17 @@ public class Board {
 	
 	private boolean placeDisplayPiece(int startX, int startY, int spaceWidth) {
 		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
-		disPiece.shiftSquares(pt);
-		boolean canPlace = canPlace(disPiece);
-		if (canPlace) {
-			currPicked.setPoints(disPiece.getPoints());
+		if (disPiece != null) {
+			disPiece.shiftSquares(pt);
+			boolean canPlace = canPlace(disPiece);
+			if (canPlace) {
+				currPicked.setPoints(disPiece.getPoints());
+			}
+			disPiece = null;
+			placeBack();
+			return canPlace;
 		}
-		disPiece = null;
-		placeBack();
-		return canPlace;
+		return false;
 	}
 	
 	public boolean canPlace(Piece piece) {
@@ -282,5 +285,40 @@ public class Board {
 		return false;
 	}
 	
+//	private boolean canStillWin(LPiece player, Point[] originalPoints) {
+//		LPiece save = deepCopyPiece(player);
+//		for (int i = 0; i < board.length; i++) {
+//			for (int j = 0; j < board[i].length; j++) {
+//				for (int k = 0; k < 4; k++) {
+//					rotatePiece(true);
+//					if (notOverlap(player, originalPoints) && canPlace(player)) {
+//						player = save;
+//						return true;
+//					}
+//				}
+//			}
+//		}
+//		player = save;
+//		return false;
+//	}
+	
+	private LPiece deepCopyPiece(LPiece player) {
+		LPiece res = new LPiece(player.getSpace());
+		res.setPoints(player.getPoints());
+		return res;
+	}
+	
+	private boolean notOverlap(Piece player, Point[] originalPoints) {
+		Point[] curr = player.getPoints();
+		int count = 0;
+		for (Point pt : curr) {
+			for (Point oPt : originalPoints) {
+				if (pt.equals(oPt)) {
+					count++;
+				}
+			}
+		}
+		return count == curr.length;
+	}
 	
 }
