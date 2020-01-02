@@ -14,6 +14,12 @@ public class Board {
 	private final Piece NONE_N_PIECE = new NPiece(-1, -1, '?');
 	private final Piece NONE_L_PIECE = new LPiece(-1, -1, 0, 0, 0, 0, '?', 0);
 	
+	private int startX;
+	private int startY;
+	private int spaceWidth;
+	private int playerIndex;
+	private int moveIndex;
+	
 	private PApplet p;
 	private char[][] board;
 	private LPiece[] lPieces;
@@ -22,9 +28,12 @@ public class Board {
 	private DPiece disPiece;
 	private boolean pHeldDown;
 	
-	public Board(PApplet p) {
+	public Board(PApplet p, int startX, int startY, int spaceWidth) {
 		System.out.println("Initialization board.");
 		this.p = p;
+		this.startX = startX;
+		this.startY = startY;
+		this.spaceWidth = spaceWidth;
 		board = new char[BOARD_LENGTH][BOARD_HEIGHT];
 		lPieces = new LPiece[NUM_PLAYER_PIECES];
 		nPieces = new NPiece[NUM_NEUTRAL_PIECES];
@@ -72,21 +81,26 @@ public class Board {
 		}	
 	}
 	
-	public void mouseInput(int startX, int startY, int spaceWidth) {
+	public void setPlayerAndMove(int playerIndex, int moveIndex) {
+		this.playerIndex = playerIndex;
+		this.moveIndex = moveIndex;
+	}
+	
+	public void mouseInput() {
 		if (p.mousePressed) {
 			if (!pHeldDown) {
 				pHeldDown = true;
-				selectPiece(startX, startY, spaceWidth);
+				selectPiece();
 			}
 		} else {
 			if (pHeldDown) {
 				pHeldDown = false;
-				placeDisplayPiece(startX, startY, spaceWidth);
+				placeDisplayPiece();
 			}
 		}
 	}
 	
-	private boolean selectPiece(int startX, int startY, int spaceWidth) {
+	private boolean selectPiece() {
 		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
 		if (currPicked == null && removePiece(pt.getRow(), pt.getCol())) {
 			disPiece = new DPiece(currPicked, pt, (p.mouseY - startY) % spaceWidth, (p.mouseX - startX) % spaceWidth);
@@ -111,11 +125,11 @@ public class Board {
 		return false;
 	}
 	
-	private boolean placeDisplayPiece(int startX, int startY, int spaceWidth) {
+	private boolean placeDisplayPiece() {
 		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
 		if (disPiece != null) {
 			disPiece.shiftSquares(pt);
-			boolean canPlace = canPlace(disPiece);
+			boolean canPlace = canPlace(disPiece) && notOverlap(currPicked, disPiece);
 			if (canPlace) {
 				currPicked.setPoints(disPiece.getPoints());
 			}
@@ -127,20 +141,20 @@ public class Board {
 	}
 	
 	public boolean canPlace(Piece piece) {
-		System.out.print("Checking if " + piece + " can be placed: ");
+		//System.out.print("Checking if " + piece + " can be placed: ");
 		if (piece == null) {
-			System.out.println("No. Piece detected as null");
+			System.out.println("Piece detected as null");
 			return false;
 		}
 		Point[] points = piece.getPoints();
 		for (int i = 0; i < points.length; i++) {
 			if (!allChecksPass(piece, points[i])) {
 				//System.out.println(points[i] + ": " + cordsInBounds(points[i]) + ", " + !overNeutral(piece, points[i]) + ", " + !overOtherPlayer(piece, points[i]));
-				System.out.println("no");
+				//System.out.println("no");
 				return false;
 			}
 		}
-		System.out.println("yes");
+		//System.out.println("yes");
 		return true;
 	}
 	
@@ -162,28 +176,28 @@ public class Board {
 		}
 	}
 	
-	public boolean playerCanWin() {
+	public boolean playerCanWin(int index) {
 		if (disPiece != null) {
 			throw new IllegalStateException("playerCanWin. The state shouldn't be checked while a piece is picked up.");
 		}
-		System.out.println("--- Checking if player can still win: ---");
+		System.out.println("--- Checking if player " + index + " can still win: ");
 		int[][] checkVals = {{0, -1, -1, 0}, {0, 1, -1, 0}, {-1, 0, 0, 1}, {1, 0, 0, 1}, {0, 1, 1, 0},
 				{0, -1, 1, 0}, {1, 0, 0, -1}, {-1, 0, 0, -1}};
-		removePlayer(lPieces[0]);
+		removePlayer(lPieces[index]);
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
 				for (int k = 0; k < checkVals.length; k++) {
 					LPiece temp = new LPiece(i, j, checkVals[k][0], checkVals[k][1], checkVals[k][2], checkVals[k][3], PLAYER_1_SPACE, PLAYER_LENGTH);
 					if (canPlace(temp) && notOverlap(currPicked, temp)) {
 						System.out.printf("Piece can be placed at (%d, %d)\n", i, j);
-						placePlayerBack(lPieces[0].getSpace());
+						placePlayerBack(lPieces[index].getSpace());
 						return true;
 					}
 				}
 			}
 		}
 		System.out.println("No place for piece found. End of game.");
-		placePlayerBack(lPieces[0].getSpace());
+		placePlayerBack(lPieces[index].getSpace());
 		return false;
 	}
 	
@@ -245,7 +259,7 @@ public class Board {
 		}
 	}
 	
-	public void display(int startX, int startY, int spaceWidth) {
+	public void display() {
 		for (int row = 0; row < board.length; row++) {
 			for (int col = 0; col < board[row].length; col++) {
 				p.fill(getFillColor(board[row][col]));
@@ -297,14 +311,26 @@ public class Board {
 			updateBoard();
 			return true;
 		}
-		System.out.println("No piece at row col could be found! No removal");
+		System.out.println("No piece was removed.");
 		return false;
 	}
+
+//	private Piece getPiece(int row, int col) {
+//		Piece res = null;
+//		Point tgt = new Point(row, col);
+//		for (int i = 0; res == null & i < lPieces.length; i++) {
+//			for (Point pt : lPieces[i].getPoints()) {
+//				if (pt.equals(tgt)) {
+//					res = 
+//				}
+//			}
+//		}
+//	}
 	
 	private boolean searchPiecesToRemove(Piece[] pieces, Point tgt) {
 		for (int i = 0; i < pieces.length; i++) {
 			for (Point pt : pieces[i].getPoints()) {
-				if (pt.equals(tgt)) {
+				if (pt.equals(tgt) && (checkPieceTurn(pieces[i]))) {
 					currPicked = pieces[i];
 					if (pieces[i].getSpace() == NEUTRAL_SPACE) {
 						pieces[i] = NONE_N_PIECE;
@@ -313,9 +339,18 @@ public class Board {
 					}
 					return true;
 				}
+				else if (pt.equals(tgt)) {
+					System.out.println("Piece selected was not correct for the turn. Ignored.");
+				}
 			}
 		}
 		return false;
+	}
+	
+	private boolean checkPieceTurn(Piece piece) {
+		boolean playerCheck = moveIndex == 0 && piece instanceof LPiece && lPieces[playerIndex] == piece;
+		boolean neutralCheck = moveIndex == 1 && piece instanceof NPiece;
+		return playerCheck || neutralCheck;
 	}
 	
 	private void removePlayer(LPiece tgt) {

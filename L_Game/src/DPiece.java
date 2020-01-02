@@ -1,5 +1,5 @@
 public class DPiece implements Piece {
-	
+
 	private Point[] points;
 	private Point selectedPoint;
 	private char space;

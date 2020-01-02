@@ -2,7 +2,7 @@ import processing.core.PApplet;
 
 public class LGameDriver extends PApplet {
 
-	public Board b = new Board(this);
+	private LGameManager game; 
 	
 	public static void main(String[] args) {
 		PApplet.main("LGameDriver");
@@ -13,22 +13,16 @@ public class LGameDriver extends PApplet {
 	}
 	
 	public void setup() {
-		background(255);
-		
+		game = new LGameManager(this);
 	}
 	
 	public void draw() {
-		background(255);
-		b.mouseInput(200, 200, 100);
-		b.display(200, 200, 100);
+		game.mouseInput();
+		game.display();
 	}
 	
 	
 	public void keyPressed() {
-		if (key == 'j') {
-			b.playerCanWin();
-		} else {
-			b.modifyPiece(key);
-		}
+		game.keyInput(key);
 	}
 }

@@ -9,8 +9,6 @@ public class Point {
 		this.c = c;
 	}
 	
-	// Don't even ask:
-	
 	public int getRow() {
 		return r;
 	}
