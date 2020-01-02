@@ -92,9 +92,17 @@ public class Board {
 		return false;
 	}
 	
-	public boolean rotatePiece(boolean rotLeft) {
+	public boolean modifyPiece(char key) {
 		if (disPiece != null) {
-			disPiece.rotate(rotLeft);
+			if (key == 'z') {
+				disPiece.rotate(true);
+			}
+			else if (key == 'x') {
+				disPiece.rotate(false);
+			}
+			else if (key == ' ') {
+				disPiece.mirror();
+			}
 			return true;
 		}
 		return false;
@@ -150,6 +158,49 @@ public class Board {
 		}
 	}
 	
+	public boolean playerCanWin() {
+		if (disPiece != null) {
+			throw new IllegalStateException("playerCanWin. The state shouldn't be checked while a piece is picked up.");
+		}
+		System.out.println("Checking if player can still win:");
+		int[][] checkVals = {{0, -1, -1, 0}, {0, 1, -1, 0}, {-1, 0, 0, 1}, {1, 0, 0, 1}, {0, 1, 1, 0},
+				{0, -1, 1, 0}, {1, 0, 0, -1}, {-1, 0, 0, -1}};
+		removePlayer(lPieces[0]);
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++) {
+				for (int k = 0; k < checkVals.length; k++) {
+					LPiece temp = new LPiece(i, j, checkVals[k][0], checkVals[k][1], checkVals[k][2], checkVals[k][3], PLAYER_1_SPACE, PLAYER_LENGTH);
+					if (canPlace(temp) && notOverlap(currPicked, temp)) {
+						System.out.printf("Piece can be placed at (%d, %d)\n", i, j);
+						System.out.println(k);
+						placeBack();
+						return true;
+					}
+				}
+			}
+		}
+		System.out.println("No place for piece found. End of game.");
+		placeBack();
+		return false;
+	}
+	
+	private boolean notOverlap(Piece player, Piece temp) {
+		Point[] curr = player.getPoints();
+		Point[] other = player.getPoints();
+		if (curr.length != other.length) {
+			return false;
+		}
+		int count = 0;
+		for (Point pt : curr) {
+			for (Point oPt : other) {
+				if (pt.equals(oPt)) {
+					count++;
+				}
+			}
+		}
+		return count == curr.length;
+	}
+	
 	private boolean overOtherPlayer(Piece p, Point currPoint) {
 		for (LPiece lP : lPieces) {
 			if (lP != p) {
@@ -171,7 +222,7 @@ public class Board {
 	private boolean overNeutral(Piece curr, Point p) {
 		if (!(curr instanceof NPiece)) {
 			for (NPiece n : nPieces) {
-				if (p.getRow() == n.getX() && p.getCol() == n.getY()) {
+				if (p.getRow() == n.getRow() && p.getCol() == n.getCol()) {			
 					return true;
 				}
 			}
@@ -263,6 +314,17 @@ public class Board {
 		}
 		return false;
 	}
+	
+	private void removePlayer(LPiece tgt) {
+		if (disPiece != null) {
+			throw new IllegalStateException("removePlayer. A piece shouldn't be removed while one is already picked up.");
+		}
+		Point[] pts = tgt.getPoints();
+		currPicked = tgt;
+		for (Point pt : pts) {
+			board[pt.getRow()][pt.getCol()] = '-';
+		}
+	}
 
 	public void placeBack() {
 		System.out.println("Placing back " + currPicked);
@@ -283,42 +345,6 @@ public class Board {
 			}
 		}
 		return false;
-	}
-	
-//	private boolean canStillWin(LPiece player, Point[] originalPoints) {
-//		LPiece save = deepCopyPiece(player);
-//		for (int i = 0; i < board.length; i++) {
-//			for (int j = 0; j < board[i].length; j++) {
-//				for (int k = 0; k < 4; k++) {
-//					rotatePiece(true);
-//					if (notOverlap(player, originalPoints) && canPlace(player)) {
-//						player = save;
-//						return true;
-//					}
-//				}
-//			}
-//		}
-//		player = save;
-//		return false;
-//	}
-	
-	private LPiece deepCopyPiece(LPiece player) {
-		LPiece res = new LPiece(player.getSpace());
-		res.setPoints(player.getPoints());
-		return res;
-	}
-	
-	private boolean notOverlap(Piece player, Point[] originalPoints) {
-		Point[] curr = player.getPoints();
-		int count = 0;
-		for (Point pt : curr) {
-			for (Point oPt : originalPoints) {
-				if (pt.equals(oPt)) {
-					count++;
-				}
-			}
-		}
-		return count == curr.length;
 	}
 	
 }

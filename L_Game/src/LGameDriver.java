@@ -25,10 +25,10 @@ public class LGameDriver extends PApplet {
 	
 	
 	public void keyPressed() {
-		if (key == 'z') {
-			b.rotatePiece(true);
+		if (key == 'j') {
+			b.playerCanWin();
 		} else {
-			b.rotatePiece(false);
+			b.modifyPiece(key);
 		}
 	}
 }

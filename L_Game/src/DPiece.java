@@ -46,6 +46,17 @@ public class DPiece implements Piece {
 		}
 	}
 	
+	public void mirror() {
+		for (int i = 0; i < points.length; i++) {
+			Point curr = points[i];
+			System.out.print("Mirroring pt: " + points[i] + " | ");
+			int newCol = 2 * selectedPoint.getCol() - curr.getCol();
+			System.out.print(selectedPoint.getRow() - curr.getRow() + ", " + (selectedPoint.getCol() - curr.getCol()) + " | ");
+			points[i] = new Point(curr.getRow(), newCol);
+			System.out.println(points[i]);
+		}
+	}
+	
 	public int[][] getDisplayData() {
 		int[][] pixelData = new int[points.length][4];
 		for (int i = 0; i < points.length; i++) {

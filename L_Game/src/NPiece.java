@@ -23,11 +23,11 @@ public class NPiece implements Piece {
 		return points;
 	}
 	
-	public int getX() {
-		return points[0].getRow();
+	public int getCol() {
+		return points[0].getCol();
 	}
 	
-	public int getY() {
-		return points[0].getCol();
+	public int getRow() {
+		return points[0].getRow();
 	}
 }
