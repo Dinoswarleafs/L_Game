@@ -58,6 +58,10 @@ public class Board {
 			placePiece(lPieces[i]);
 		}
 		System.out.println("Finished updating board.");
+		printBoard();
+	}
+	
+	private void printBoard() {
 		System.out.println("Current board: ");
 		for (int i = 0; i < BOARD_LENGTH; i++) {
 			System.out.print("[ " + board[i][0]);
@@ -65,8 +69,7 @@ public class Board {
 				System.out.print(", " + board[i][j]);
 			}
 			System.out.println("]");
-		}
-		
+		}	
 	}
 	
 	public void mouseInput(int startX, int startY, int spaceWidth) {
@@ -132,6 +135,7 @@ public class Board {
 		Point[] points = piece.getPoints();
 		for (int i = 0; i < points.length; i++) {
 			if (!allChecksPass(piece, points[i])) {
+				//System.out.println(points[i] + ": " + cordsInBounds(points[i]) + ", " + !overNeutral(piece, points[i]) + ", " + !overOtherPlayer(piece, points[i]));
 				System.out.println("no");
 				return false;
 			}
@@ -162,7 +166,7 @@ public class Board {
 		if (disPiece != null) {
 			throw new IllegalStateException("playerCanWin. The state shouldn't be checked while a piece is picked up.");
 		}
-		System.out.println("Checking if player can still win:");
+		System.out.println("--- Checking if player can still win: ---");
 		int[][] checkVals = {{0, -1, -1, 0}, {0, 1, -1, 0}, {-1, 0, 0, 1}, {1, 0, 0, 1}, {0, 1, 1, 0},
 				{0, -1, 1, 0}, {1, 0, 0, -1}, {-1, 0, 0, -1}};
 		removePlayer(lPieces[0]);
@@ -172,23 +176,22 @@ public class Board {
 					LPiece temp = new LPiece(i, j, checkVals[k][0], checkVals[k][1], checkVals[k][2], checkVals[k][3], PLAYER_1_SPACE, PLAYER_LENGTH);
 					if (canPlace(temp) && notOverlap(currPicked, temp)) {
 						System.out.printf("Piece can be placed at (%d, %d)\n", i, j);
-						System.out.println(k);
-						placeBack();
+						placePlayerBack(lPieces[0].getSpace());
 						return true;
 					}
 				}
 			}
 		}
 		System.out.println("No place for piece found. End of game.");
-		placeBack();
+		placePlayerBack(lPieces[0].getSpace());
 		return false;
 	}
 	
 	private boolean notOverlap(Piece player, Piece temp) {
 		Point[] curr = player.getPoints();
-		Point[] other = player.getPoints();
+		Point[] other = temp.getPoints();
 		if (curr.length != other.length) {
-			return false;
+			return true;
 		}
 		int count = 0;
 		for (Point pt : curr) {
@@ -198,12 +201,12 @@ public class Board {
 				}
 			}
 		}
-		return count == curr.length;
+		return count != curr.length;
 	}
 	
 	private boolean overOtherPlayer(Piece p, Point currPoint) {
 		for (LPiece lP : lPieces) {
-			if (lP != p) {
+			if (lP != p && lP != currPicked) {
 				for (Point lPts : lP.getPoints()) {
 					if (currPoint.getRow() == lPts.getRow() && currPoint.getCol() == lPts.getCol()) {
 						return true;
@@ -322,8 +325,22 @@ public class Board {
 		Point[] pts = tgt.getPoints();
 		currPicked = tgt;
 		for (Point pt : pts) {
-			board[pt.getRow()][pt.getCol()] = '-';
+			board[pt.getRow()][pt.getCol()] = BLANK_SPACE;
 		}
+		printBoard();
+	}
+	
+	private void placePlayerBack(char space) {
+		System.out.println("Placing player back.");
+		if (currPicked == null) {
+			throw new IllegalStateException("removePlayer. A piece can't be placed back when no piece is picked up.");
+		}
+		Point[] pts = currPicked.getPoints();
+		for (Point pt : pts) {
+			board[pt.getRow()][pt.getCol()] = space;
+		}
+		currPicked = null;
+		printBoard();
 	}
 
 	public void placeBack() {
