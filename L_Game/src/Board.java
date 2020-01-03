@@ -1,4 +1,5 @@
 import processing.core.PApplet;
+import processing.core.PConstants;
 
 public class Board {
 	
@@ -260,6 +261,7 @@ public class Board {
 	}
 	
 	public void display() {
+		p.rectMode(PConstants.CORNER);
 		for (int row = 0; row < board.length; row++) {
 			for (int col = 0; col < board[row].length; col++) {
 				p.fill(getFillColor(board[row][col]));
