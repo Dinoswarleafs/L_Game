@@ -3,21 +3,6 @@ import processing.core.PConstants;
 
 public class Board {
 	
-	private final int BOARD_LENGTH = 4;
-	private final int BOARD_HEIGHT = 4;
-	private final int NUM_PLAYER_PIECES = 2;
-	private final int NUM_NEUTRAL_PIECES = 2;
-	private final char BLANK_SPACE = '-';
-	private final char NEUTRAL_SPACE = 'o';
-	private final char PLAYER_LENGTH = 3;
-	private final char PLAYER_1_SPACE = 'b';
-	private final char PLAYER_2_SPACE = 'r';
-	private final Piece NONE_N_PIECE = new NPiece(-1, -1, '?');
-	private final Piece NONE_L_PIECE = new LPiece(-1, -1, 0, 0, 0, 0, '?', 0);
-	
-	private int startX;
-	private int startY;
-	private int spaceWidth;
 	private int playerIndex;
 	private int moveIndex;
 	
@@ -27,44 +12,42 @@ public class Board {
 	private NPiece[] nPieces;
 	private Piece currPicked;
 	private DPiece disPiece;
+	private Piece savedPiece;
 	private boolean pHeldDown;
 	
-	public Board(PApplet p, int startX, int startY, int spaceWidth) {
+	public Board(PApplet p) {
 		System.out.println("Initialization board.");
 		this.p = p;
-		this.startX = startX;
-		this.startY = startY;
-		this.spaceWidth = spaceWidth;
-		board = new char[BOARD_LENGTH][BOARD_HEIGHT];
-		lPieces = new LPiece[NUM_PLAYER_PIECES];
-		nPieces = new NPiece[NUM_NEUTRAL_PIECES];
+		board = new char[LConstants.BOARD_LENGTH][LConstants.BOARD_HEIGHT];
+		lPieces = new LPiece[LConstants.NUM_PLAYER_PIECES];
+		nPieces = new NPiece[LConstants.NUM_NEUTRAL_PIECES];
 		resetBoard();
 		System.out.println("Finished initializing board.");
 	}
 	
 	private void initializePieces() {
 		System.out.println("Initializing pieces.");
-		nPieces[0] = new NPiece(0, 0, NEUTRAL_SPACE);
-		nPieces[1] = new NPiece(BOARD_LENGTH - 1, BOARD_LENGTH - 1, NEUTRAL_SPACE);
-		lPieces[0] = new LPiece(3, 2, 0, -1, -1, 0, PLAYER_1_SPACE, PLAYER_LENGTH);
-		lPieces[1] = new LPiece(0, 1, 0, 1, 1, 0, PLAYER_2_SPACE, PLAYER_LENGTH);
+		nPieces[0] = new NPiece(0, 0, LConstants.NEUTRAL_SPACE);
+		nPieces[1] = new NPiece(LConstants.BOARD_LENGTH - 1, LConstants.BOARD_LENGTH - 1, LConstants.NEUTRAL_SPACE);
+		lPieces[0] = new LPiece(3, 2, LConstants.NONE, LConstants.LEFT, LConstants.UP, LConstants.NONE, LConstants.PLAYER_1_SPACE, LConstants.PLAYER_LENGTH);
+		lPieces[1] = new LPiece(0, 1, LConstants.NONE, LConstants.RIGHT, LConstants.DOWN, LConstants.NONE, LConstants.PLAYER_2_SPACE, LConstants.PLAYER_LENGTH);
 		System.out.println("Finished initializing pieces.");
 	}
 	
 	private void updateBoard() {
 		System.out.println("Updating board.");
 		System.out.println("Placing background");
-		for (int i = 0; i < BOARD_LENGTH; i++) {
-			for (int j = 0; j < BOARD_HEIGHT; j++) {
-				board[i][j] = BLANK_SPACE;
+		for (int i = 0; i < LConstants.BOARD_LENGTH; i++) {
+			for (int j = 0; j < LConstants.BOARD_HEIGHT; j++) {
+				board[i][j] = LConstants.BLANK_SPACE;
 			}
 		}
 		System.out.println("Placing neutral pieces");
-		for (int i = 0; i < NUM_NEUTRAL_PIECES; i++) {
+		for (int i = 0; i < LConstants.NUM_NEUTRAL_PIECES; i++) {
 			placePiece(nPieces[i]);
 		}
 		System.out.println("Placing player pieces");
-		for (int i = 0; i < NUM_PLAYER_PIECES; i++) {
+		for (int i = 0; i < LConstants.NUM_PLAYER_PIECES; i++) {
 			placePiece(lPieces[i]);
 		}
 		System.out.println("Finished updating board.");
@@ -73,9 +56,9 @@ public class Board {
 	
 	private void printBoard() {
 		System.out.println("Current board: ");
-		for (int i = 0; i < BOARD_LENGTH; i++) {
+		for (int i = 0; i < LConstants.BOARD_LENGTH; i++) {
 			System.out.print("[ " + board[i][0]);
-			for (int j = 1; j < BOARD_HEIGHT; j++) {
+			for (int j = 1; j < LConstants.BOARD_HEIGHT; j++) {
 				System.out.print(", " + board[i][j]);
 			}
 			System.out.println("]");
@@ -87,7 +70,8 @@ public class Board {
 		this.moveIndex = moveIndex;
 	}
 	
-	public void mouseInput() {
+	public boolean mouseInput() {
+		boolean res = false;
 		if (p.mousePressed) {
 			if (!pHeldDown) {
 				pHeldDown = true;
@@ -96,15 +80,36 @@ public class Board {
 		} else {
 			if (pHeldDown) {
 				pHeldDown = false;
-				placeDisplayPiece();
+				res = placeDisplayPiece();
 			}
 		}
+		return res;
+	}
+	
+	public boolean nonePickedUp() {
+		return disPiece == null;
+	}
+	
+	public void savePlayer(int index) {
+		LPiece save = new LPiece(lPieces[index].getSpace());
+		save.setPoints(lPieces[index].getPoints());
+		savedPiece = save;
+	}
+	
+	public boolean playerMoved(int index) {
+		return savedPiece != null && notOverlap(savedPiece, lPieces[index]);
+	}
+	
+	public void resetPlayer(int index) {
+		lPieces[index].setPoints(savedPiece.getPoints());
+		savedPiece = null;
+		updateBoard();
 	}
 	
 	private boolean selectPiece() {
-		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
+		Point pt = new Point((p.mouseY - LConstants.START_Y) / LConstants.SQUARE_WIDTH, (p.mouseX - LConstants.START_X) / LConstants.SQUARE_WIDTH);
 		if (currPicked == null && removePiece(pt.getRow(), pt.getCol())) {
-			disPiece = new DPiece(currPicked, pt, (p.mouseY - startY) % spaceWidth, (p.mouseX - startX) % spaceWidth);
+			disPiece = new DPiece(currPicked, pt, (p.mouseY - LConstants.START_Y) % LConstants.SQUARE_WIDTH, (p.mouseX - LConstants.START_X) % LConstants.SQUARE_WIDTH);
 			return true;
 		}
 		return false;
@@ -112,13 +117,13 @@ public class Board {
 	
 	public boolean modifyPiece(char key) {
 		if (disPiece != null) {
-			if (key == 'z') {
+			if (key == LConstants.ROTATE_LEFT) {
 				disPiece.rotate(true);
 			}
-			else if (key == 'x') {
+			else if (key == LConstants.ROTATE_RIGHT) {
 				disPiece.rotate(false);
 			}
-			else if (key == ' ') {
+			else if (key == LConstants.MIRROR) {
 				disPiece.mirror();
 			}
 			return true;
@@ -127,7 +132,10 @@ public class Board {
 	}
 	
 	private boolean placeDisplayPiece() {
-		Point pt = new Point((p.mouseY - startY) / spaceWidth, (p.mouseX - startX) / spaceWidth);
+		if (savedPiece == null) {
+			throw new IllegalStateException("placeDisplayPiece. There must be a saved piece before placing");
+		}
+		Point pt = new Point((p.mouseY - LConstants.START_Y) / LConstants.SQUARE_WIDTH, (p.mouseX - LConstants.START_X) / LConstants.SQUARE_WIDTH);
 		if (disPiece != null) {
 			disPiece.shiftSquares(pt);
 			boolean canPlace = canPlace(disPiece) && notOverlap(currPicked, disPiece);
@@ -165,7 +173,7 @@ public class Board {
 	}
 	
 	public void placePiece(Piece piece) {
-		if (piece == NONE_L_PIECE || piece == NONE_N_PIECE) {
+		if (piece == LConstants.NONE_L_PIECE || piece == LConstants.NONE_N_PIECE) {
 			return;
 		}
 		if (!canPlace(piece)) {
@@ -182,13 +190,15 @@ public class Board {
 			throw new IllegalStateException("playerCanWin. The state shouldn't be checked while a piece is picked up.");
 		}
 		System.out.println("--- Checking if player " + index + " can still win: ");
-		int[][] checkVals = {{0, -1, -1, 0}, {0, 1, -1, 0}, {-1, 0, 0, 1}, {1, 0, 0, 1}, {0, 1, 1, 0},
-				{0, -1, 1, 0}, {1, 0, 0, -1}, {-1, 0, 0, -1}};
+		int[][] checkVals = {{LConstants.NONE, LConstants.UP, LConstants.LEFT, LConstants.NONE}, {LConstants.NONE, LConstants.DOWN, LConstants.LEFT, LConstants.NONE}, 
+				{LConstants.LEFT, LConstants.NONE, LConstants.NONE, LConstants.DOWN}, {LConstants.RIGHT, LConstants.NONE, LConstants.NONE, LConstants.DOWN}, 
+				{LConstants.NONE, LConstants.DOWN, LConstants.RIGHT, LConstants.NONE}, {LConstants.NONE, LConstants.UP, LConstants.RIGHT, LConstants.NONE}, 
+				{LConstants.RIGHT, LConstants.NONE, LConstants.NONE, LConstants.LEFT}, {LConstants.LEFT, LConstants.NONE, LConstants.NONE, LConstants.LEFT}};
 		removePlayer(lPieces[index]);
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
 				for (int k = 0; k < checkVals.length; k++) {
-					LPiece temp = new LPiece(i, j, checkVals[k][0], checkVals[k][1], checkVals[k][2], checkVals[k][3], PLAYER_1_SPACE, PLAYER_LENGTH);
+					LPiece temp = new LPiece(i, j, checkVals[k][0], checkVals[k][1], checkVals[k][2], checkVals[k][3], LConstants.PLAYER_1_SPACE, LConstants.PLAYER_LENGTH);
 					if (canPlace(temp) && notOverlap(currPicked, temp)) {
 						System.out.printf("Piece can be placed at (%d, %d)\n", i, j);
 						placePlayerBack(lPieces[index].getSpace());
@@ -234,7 +244,7 @@ public class Board {
 	
 	
 	private boolean cordsInBounds(Point p) {
-		return !(p.getRow() < 0 || p.getRow() >= BOARD_LENGTH || p.getCol() < 0 || p.getCol() >= BOARD_HEIGHT);
+		return !(p.getRow() < 0 || p.getRow() >= LConstants.BOARD_LENGTH || p.getCol() < 0 || p.getCol() >= LConstants.BOARD_HEIGHT);
 	}
 	
 	private boolean overNeutral(Piece curr, Point p) {
@@ -256,7 +266,7 @@ public class Board {
 		
 		Point[] pts = piece.getPoints();
 		for (int i = 0; i < pts.length; i++) {
-			board[pts[i].getRow()][pts[i].getCol()] = BLANK_SPACE;
+			board[pts[i].getRow()][pts[i].getCol()] = LConstants.BLANK_SPACE;
 		}
 	}
 	
@@ -265,7 +275,7 @@ public class Board {
 		for (int row = 0; row < board.length; row++) {
 			for (int col = 0; col < board[row].length; col++) {
 				p.fill(getFillColor(board[row][col]));
-				p.rect(mapToScreen(startX, col, spaceWidth), mapToScreen(startX, row, spaceWidth), spaceWidth, spaceWidth);
+				p.rect(mapToScreen(LConstants.START_X, col, LConstants.SQUARE_WIDTH), mapToScreen(LConstants.START_X, row, LConstants.SQUARE_WIDTH), LConstants.SQUARE_WIDTH, LConstants.SQUARE_WIDTH);
 			}
 		}
 		if (disPiece != null) {
@@ -273,20 +283,20 @@ public class Board {
 			p.fill(getFillColor(disPiece.getSpace()));
 			for (int i = 0; i < displayData.length; i++) {
 				int[] thisData = displayData[i];
-				p.rect((p.mouseX - thisData[3]) + spaceWidth * thisData[1], (p.mouseY - thisData[2]) + spaceWidth * thisData[0], spaceWidth, spaceWidth);
+				p.rect((p.mouseX - thisData[3]) + LConstants.SQUARE_WIDTH * thisData[1], (p.mouseY - thisData[2]) + LConstants.SQUARE_WIDTH * thisData[0], LConstants.SQUARE_WIDTH, LConstants.SQUARE_WIDTH);
 			}
 		}
 	}
 	
 	private int getFillColor(char c) {
 		switch (c) {
-		case PLAYER_1_SPACE: return p.color(150, 150, 240);
-		case PLAYER_2_SPACE: return p.color(240, 150, 150);
-		case NEUTRAL_SPACE: return p.color(180);
-		case BLANK_SPACE: return p.color(255);
+		case LConstants.PLAYER_1_SPACE: return LConstants.PLAYER_1_COLOR;
+		case LConstants.PLAYER_2_SPACE: return LConstants.PLAYER_2_COLOR;
+		case LConstants.NEUTRAL_SPACE: return LConstants.NEUTRAL_COLOR;
+		case LConstants.BLANK_SPACE: return LConstants.BLANK_COLOR;
 		}
 		System.out.println("Warning! No color detected for passed character " + c);
-		return p.color(0);
+		return LConstants.MISSED_COLOR;
 	}
 	
 	private int mapToScreen(int startNum, int num, int scale) {
@@ -316,28 +326,16 @@ public class Board {
 		System.out.println("No piece was removed.");
 		return false;
 	}
-
-//	private Piece getPiece(int row, int col) {
-//		Piece res = null;
-//		Point tgt = new Point(row, col);
-//		for (int i = 0; res == null & i < lPieces.length; i++) {
-//			for (Point pt : lPieces[i].getPoints()) {
-//				if (pt.equals(tgt)) {
-//					res = 
-//				}
-//			}
-//		}
-//	}
 	
 	private boolean searchPiecesToRemove(Piece[] pieces, Point tgt) {
 		for (int i = 0; i < pieces.length; i++) {
 			for (Point pt : pieces[i].getPoints()) {
 				if (pt.equals(tgt) && (checkPieceTurn(pieces[i]))) {
 					currPicked = pieces[i];
-					if (pieces[i].getSpace() == NEUTRAL_SPACE) {
-						pieces[i] = NONE_N_PIECE;
+					if (pieces[i].getSpace() == LConstants.NEUTRAL_SPACE) {
+						pieces[i] = LConstants.NONE_N_PIECE;
 					} else {
-						pieces[i] = NONE_L_PIECE;
+						pieces[i] = LConstants.NONE_L_PIECE;
 					}
 					return true;
 				}
@@ -362,7 +360,7 @@ public class Board {
 		Point[] pts = tgt.getPoints();
 		currPicked = tgt;
 		for (Point pt : pts) {
-			board[pt.getRow()][pt.getCol()] = BLANK_SPACE;
+			board[pt.getRow()][pt.getCol()] = LConstants.BLANK_SPACE;
 		}
 		printBoard();
 	}
@@ -392,7 +390,7 @@ public class Board {
 
 	private boolean placeBackPiece(Piece[] pieces) {
 		for (int i = 0; i < pieces.length; i++) {
-			if (pieces[i].getSpace() == '?') {
+			if (pieces[i].getSpace() == LConstants.NONE_CHAR) {
 				pieces[i] = currPicked;
 				currPicked = null;
 				return true;

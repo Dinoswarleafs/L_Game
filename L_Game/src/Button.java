@@ -6,9 +6,6 @@ public class Button {
 	
 	private PApplet p;
 	
-	private final static int TEXT_SIZE = 32;
-	private final static String TEXT_FONT = "Calibri";
-	
 	private int xPos, yPos;
 	private int width, height;
 	private String displayText;
@@ -24,9 +21,10 @@ public class Button {
 		this.width = width;
 		this.height = height;
 		this.displayText = displayText;
-		isActive = true;
-		color = new int[] {p.color(200), p.color(210, 210, 230), p.color(210, 230, 210), p.color(160, 180, 160)};
-		font = p.createFont(TEXT_FONT, TEXT_SIZE);
+		isActive = false;
+		color = new int[] {LConstants.UNACTIVE_BUTTON_COLOR, LConstants.ACTIVE_BUTTON_COLOR,
+				LConstants.HOVERED_BUTTON_COLOR, LConstants.CLICKED_BUTTON_COLOR};
+		font = p.createFont(LConstants.TEXT_FONT, LConstants.TEXT_SIZE);
 	}
 	
 	public void display() {
@@ -35,7 +33,7 @@ public class Button {
 		p.rect(xPos, yPos, width, height);
 		p.textFont(font);
 		p.textAlign(PConstants.CENTER);
-		p.fill(0);
+		p.fill(LConstants.DEFAULT_TEXT_COLOR);
 		p.text(displayText, xPos, yPos + height/4);
 		update();
 	}
@@ -44,13 +42,13 @@ public class Button {
 		if (isActive) {
 			if (mouseOver()) {
 				if (p.mousePressed) {
-					return color[3];
+					return color[LConstants.CLICKED_BUTTON];
 				} 
-				return color[2];
+				return color[LConstants.HOVERED_BUTTON];
 			} 
-			return color[1];
+			return color[LConstants.ACTIVE_BUTTON];
 		} 
-		return color[0];
+		return color[LConstants.UNACTIVE_BUTTON];
 	}
 	
 	private void update() {
@@ -63,7 +61,7 @@ public class Button {
 	}
 	
 	public boolean isClicked() {
-		return !p.mousePressed && prevPressed && mouseOver();
+		return isActive && !p.mousePressed && prevPressed && mouseOver();
 	}
 	
 	// BRB EATING MY BRAIN NEEDS BREAK

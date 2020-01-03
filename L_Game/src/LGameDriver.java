@@ -9,7 +9,7 @@ public class LGameDriver extends PApplet {
 	}
 	
 	public void settings() {
-		size(800, 800);
+		size(LConstants.SCREEN_WIDTH, LConstants.SCREEN_HEIGHT);
 	}
 	
 	public void setup() {

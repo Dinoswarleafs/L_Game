@@ -11,54 +11,65 @@ public class LGameManager {
 	private Button undoButton;
 	private int CURRENT_PLAYER;
 	private int CURRENT_MOVE;
-	
-	private final static int TEXT_SIZE = 32;
-	private final static String TEXT_FONT = "Calibri";
-	private final static int PLAYER_1 = 0;
-	private final static int PLAYER_2 = 1;
-	private final static int MOVE_PLAYER = 0;
-	private final static int MOVE_NEUTRAL = 1;
-	private final static int GAME_OVER = -1;
-	
-	private final static int START_X = 200;
-	private final static int START_Y = 200;
-	private final static int SQUARE_WIDTH = 100;
+	private boolean playerMoved;
 	
 	public LGameManager(PApplet p) {
 		this.p = p;
-		comButton = new Button(p, 400, 650, 200, 50, "Comfirm");
-		undoButton = new Button(p, 400, 725, 200, 50, "Undo");
-		font = p.createFont(TEXT_FONT, TEXT_SIZE);
-		b = new Board(p, START_X, START_Y, SQUARE_WIDTH);
+		comButton = new Button(p, LConstants.COMFIRM_BUTTON_X, LConstants.COMFIRM_BUTTON_Y, 
+				LConstants.COMFIRM_BUTTON_WIDTH, LConstants.COMFIRM_BUTTON_HEIGHT, 
+				LConstants.COMFIRM_BUTTON_TEXT);
+		undoButton = new Button(p, LConstants.UNDO_BUTTON_X, LConstants.UNDO_BUTTON_Y, 
+				LConstants.UNDO_BUTTON_WIDTH, LConstants.UNDO_BUTTON_HEIGHT, 
+				LConstants.UNDO_BUTTON_TEXT);
+		font = p.createFont(LConstants.TEXT_FONT, LConstants.TEXT_SIZE);
+		b = new Board(p);
+		b.savePlayer(CURRENT_PLAYER);
 	}
 	
 	public void display() {
-		p.background(255);
+		p.background(LConstants.BACKGROUND_COLOR);
 		displayText();
 		b.display();
-		handleButtons();
+		if (CURRENT_PLAYER != LConstants.GAME_OVER) {
+			handleButtons();
+		}
 	}
 	
 	public void displayText() {
-		String playerText = CURRENT_PLAYER == PLAYER_1 ? "Player 1" : "Player 2";
-		int dispColor = CURRENT_PLAYER == PLAYER_1 ? p.color(150, 150, 240) : p.color(240, 150, 150);
-		String moveText = CURRENT_MOVE == MOVE_PLAYER ? "player" : "neutral";
-		p.textAlign(PConstants.LEFT);
-		p.fill(dispColor);
-		p.textFont(font);
-		p.text(playerText, 280, 150);
-		p.fill(p.color(0));
-		p.text(" is placing", 280 + 105, 150);
-		p.text("Moving ", 270, 150 + 38);
-		int dispOffset = CURRENT_MOVE == MOVE_PLAYER ? 0 : 12;
-		p.text(" piece", 270 + 185 + dispOffset, 150 + 38);
-		dispColor = CURRENT_MOVE == MOVE_PLAYER ? dispColor : p.color(180);
-		p.fill(dispColor);
-		p.text(moveText, 270 + 105, 150 + 38);
+		if (CURRENT_PLAYER != LConstants.GAME_OVER) {
+			String playerText = CURRENT_PLAYER == LConstants.PLAYER_1 ? "Player 1" : "Player 2";
+			int dispColor = CURRENT_PLAYER == LConstants.PLAYER_1 ? LConstants.PLAYER_1_COLOR : LConstants.PLAYER_2_COLOR;
+			String moveText = CURRENT_MOVE == LConstants.MOVE_PLAYER ? "player" : "neutral";
+			p.textAlign(PConstants.LEFT);
+			p.fill(dispColor);
+			p.textFont(font);
+			p.text(playerText, LConstants.PLAYER_STATUS_LINE_X, LConstants.PLAYER_STATUS_LINE_Y);
+			p.fill(LConstants.DEFAULT_TEXT_COLOR);
+			p.text(" is placing", LConstants.PLAYER_STATUS_LINE_X + LConstants.PLAYER_STATUS_OFFSET_X, LConstants.PLAYER_STATUS_LINE_Y);
+			p.text("Moving ", LConstants.MOVE_STATUS_OFFSET_X, LConstants.PLAYER_STATUS_LINE_Y + LConstants.PLAYER_STATUS_OFFSET_Y);
+			int dispOffset = CURRENT_MOVE == LConstants.MOVE_PLAYER ? 0 : LConstants.MOVE_STATUS_OFFSET_X_3;
+			p.text(" piece", LConstants.MOVE_STATUS_OFFSET_X + LConstants.MOVE_STATUS_OFFSET_X_2 + dispOffset, LConstants.PLAYER_STATUS_LINE_Y + LConstants.PLAYER_STATUS_OFFSET_Y);
+			dispColor = CURRENT_MOVE == LConstants.MOVE_PLAYER ? dispColor : LConstants.NEUTRAL_COLOR;
+			p.fill(dispColor);
+			p.text(moveText, LConstants.MOVE_STATUS_OFFSET_X + LConstants.PLAYER_STATUS_OFFSET_X, LConstants.PLAYER_STATUS_LINE_Y + LConstants.PLAYER_STATUS_OFFSET_Y);
+		} else {
+			String playerText = CURRENT_PLAYER == LConstants.PLAYER_2 ? "Player 1" : "Player 2";
+			int dispColor = CURRENT_PLAYER == LConstants.PLAYER_2 ? LConstants.PLAYER_1_COLOR : LConstants.PLAYER_2_COLOR;
+			p.textAlign(PConstants.LEFT);
+			p.fill(dispColor);
+			p.textFont(font);
+			p.text(playerText, LConstants.GAME_OVER_LINE_X, LConstants.GAME_OVER_OFFSET_Y);
+			p.fill(LConstants.DEFAULT_TEXT_COLOR);
+			p.text(" wins", LConstants.GAME_OVER_LINE_X + LConstants.GAME_OVER_OFFSET_X, LConstants.GAME_OVER_OFFSET_Y);
+			p.fill(LConstants.DEFAULT_TEXT_COLOR);
+			p.text("Press space to restart", 270, LConstants.GAME_OVER_OFFSET_Y + LConstants.PLAYER_STATUS_OFFSET_Y);
+		}
 	}
 	
 	public void mouseInput() {
-		b.mouseInput();
+		if (CURRENT_PLAYER != LConstants.GAME_OVER && b.mouseInput()) {
+			playerMoved = true;
+		}
 	}
 	
 	public void handleButtons() {
@@ -66,15 +77,36 @@ public class LGameManager {
 			CURRENT_MOVE = Math.abs(CURRENT_MOVE - 1);
 			if (CURRENT_MOVE == 0) {
 				CURRENT_PLAYER = Math.abs(CURRENT_PLAYER - 1);
+				b.savePlayer(CURRENT_PLAYER);
+				playerMoved = false;
+				if (!b.playerCanWin(CURRENT_PLAYER)) {
+					CURRENT_PLAYER = LConstants.GAME_OVER;
+					CURRENT_MOVE = LConstants.GAME_OVER;
+				}
 			}
 			b.setPlayerAndMove(CURRENT_PLAYER, CURRENT_MOVE);
 			System.out.println("CURRENT MOVE: " + CURRENT_MOVE + "\nCURRENT PLAYER: " + CURRENT_PLAYER);
 		}
+		if (undoButton.isClicked()) {
+			b.resetPlayer(CURRENT_PLAYER);
+			b.savePlayer(CURRENT_PLAYER);
+		}
+		comButton.setActive(b.nonePickedUp() && playerMoved && b.playerMoved(CURRENT_PLAYER));
+		undoButton.setActive(b.nonePickedUp() && CURRENT_MOVE == LConstants.MOVE_PLAYER && b.playerMoved(CURRENT_PLAYER));
 		comButton.display();
 		undoButton.display();
 	}
 
 	public void keyInput(char key) {
+		if (CURRENT_PLAYER == LConstants.GAME_OVER && key == LConstants.RESET_KEY) {
+			resetGame();
+			b.resetBoard();
+		}
 		b.modifyPiece(key);
+	}
+	
+	private void resetGame() {
+		CURRENT_PLAYER = LConstants.PLAYER_1;
+		CURRENT_MOVE = LConstants.MOVE_PLAYER;
 	}
 }
