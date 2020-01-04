@@ -13,6 +13,7 @@ public class Board {
 	private Piece currPicked;
 	private DPiece disPiece;
 	private Piece savedPiece;
+	private NPiece[] savedNeutrals;
 	private boolean pHeldDown;
 	
 	public Board(PApplet p) {
@@ -90,20 +91,33 @@ public class Board {
 		return disPiece == null;
 	}
 	
-	public void savePlayer(int index) {
-		LPiece save = new LPiece(lPieces[index].getSpace());
-		save.setPoints(lPieces[index].getPoints());
-		savedPiece = save;
+	public void savePlayer() {
+		if (moveIndex == LConstants.MOVE_PLAYER) {
+			Piece save = new LPiece(lPieces[playerIndex].getSpace());
+			save.setPoints(lPieces[playerIndex].getPoints());
+			savedPiece = save;
+		} else {
+			savedNeutrals = new NPiece[] {new NPiece(nPieces[0].getRow(), nPieces[0].getCol(), nPieces[0].getSpace()),
+					new NPiece(nPieces[1].getRow(), nPieces[1].getCol(), nPieces[1].getSpace())};
+		}
 	}
 	
-	public boolean playerMoved(int index) {
-		return savedPiece != null && notOverlap(savedPiece, lPieces[index]);
+	public boolean playerMoved() {
+		return (moveIndex == LConstants.MOVE_NEUTRAL && (notOverlap(savedNeutrals[0], nPieces[0]) || notOverlap(savedNeutrals[1], nPieces[1])))
+				|| (moveIndex == LConstants.MOVE_PLAYER && notOverlap(savedPiece, lPieces[playerIndex]));
 	}
 	
-	public void resetPlayer(int index) {
-		lPieces[index].setPoints(savedPiece.getPoints());
-		savedPiece = null;
-		updateBoard();
+	public void resetPlayer() {
+		if (moveIndex == LConstants.MOVE_PLAYER) {
+			lPieces[playerIndex].setPoints(savedPiece.getPoints());
+			savedPiece = null;
+			updateBoard();
+		} else {
+			nPieces[0] = savedNeutrals[0];
+			nPieces[1] = savedNeutrals[1];
+			savedNeutrals = null;
+			updateBoard();
+		}
 	}
 	
 	private boolean selectPiece() {
@@ -330,6 +344,7 @@ public class Board {
 	private boolean searchPiecesToRemove(Piece[] pieces, Point tgt) {
 		for (int i = 0; i < pieces.length; i++) {
 			for (Point pt : pieces[i].getPoints()) {
+				System.out.println("HERE");
 				if (pt.equals(tgt) && (checkPieceTurn(pieces[i]))) {
 					currPicked = pieces[i];
 					if (pieces[i].getSpace() == LConstants.NEUTRAL_SPACE) {
@@ -349,8 +364,17 @@ public class Board {
 	
 	private boolean checkPieceTurn(Piece piece) {
 		boolean playerCheck = moveIndex == 0 && piece instanceof LPiece && lPieces[playerIndex] == piece;
-		boolean neutralCheck = moveIndex == 1 && piece instanceof NPiece;
+		boolean neutralCheck = moveIndex == 1 && piece instanceof NPiece && neutralMoveValid((NPiece) piece);
 		return playerCheck || neutralCheck;
+	}
+	
+	private boolean neutralMoveValid(NPiece piece) {
+		boolean noneMoved = !notOverlap(savedNeutrals[0], nPieces[0]) && !notOverlap(savedNeutrals[1], nPieces[1]);
+		if (noneMoved) {
+			return true;
+		}
+		int movedIndex = piece == nPieces[0] ? 0 : 1;
+		return notOverlap(savedNeutrals[movedIndex], nPieces[movedIndex]);
 	}
 	
 	private void removePlayer(LPiece tgt) {

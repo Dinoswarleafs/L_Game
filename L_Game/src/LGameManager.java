@@ -23,8 +23,16 @@ public class LGameManager {
 				LConstants.UNDO_BUTTON_WIDTH, LConstants.UNDO_BUTTON_HEIGHT, 
 				LConstants.UNDO_BUTTON_TEXT);
 		font = p.createFont(LConstants.TEXT_FONT, LConstants.TEXT_SIZE);
+		initVars();
 		b = new Board(p);
-		b.savePlayer(CURRENT_PLAYER);
+		b.savePlayer();
+	}
+	
+	public void initVars() {
+		CURRENT_PLAYER = LConstants.PLAYER_1;
+		CURRENT_MOVE = LConstants.MOVE_PLAYER;
+		playerWon = LConstants.GAME_OVER;
+		playerMoved = false;
 	}
 	
 	public void display() {
@@ -68,6 +76,8 @@ public class LGameManager {
 	}
 	
 	public void mouseInput() {
+		// TODO: Fix println(b.mouseInput()) breaks confirm button LOL (cause of b.prevPressed)
+		//		In the meantime make a variable to store the result and reuse it
 		if (CURRENT_PLAYER != LConstants.GAME_OVER && b.mouseInput()) {
 			playerMoved = true;
 		}
@@ -78,8 +88,6 @@ public class LGameManager {
 			CURRENT_MOVE = Math.abs(CURRENT_MOVE - 1);
 			if (CURRENT_MOVE == 0) {
 				CURRENT_PLAYER = Math.abs(CURRENT_PLAYER - 1);
-				System.out.println(CURRENT_PLAYER);
-				b.savePlayer(CURRENT_PLAYER);
 				playerMoved = false;
 				if (!b.playerCanWin(CURRENT_PLAYER)) {
 					playerWon = CURRENT_PLAYER == LConstants.PLAYER_2 ? LConstants.PLAYER_1 : LConstants.PLAYER_2;	
@@ -88,14 +96,15 @@ public class LGameManager {
 				}
 			}
 			b.setPlayerAndMove(CURRENT_PLAYER, CURRENT_MOVE);
+			b.savePlayer();
 			System.out.println("CURRENT MOVE: " + CURRENT_MOVE + "\nCURRENT PLAYER: " + CURRENT_PLAYER);
 		}
 		if (undoButton.isClicked()) {
-			b.resetPlayer(CURRENT_PLAYER);
-			b.savePlayer(CURRENT_PLAYER);
+			b.resetPlayer();
+			b.savePlayer();
 		}
-		comButton.setActive(b.nonePickedUp() && playerMoved && b.playerMoved(CURRENT_PLAYER));
-		undoButton.setActive(b.nonePickedUp() && CURRENT_MOVE == LConstants.MOVE_PLAYER && b.playerMoved(CURRENT_PLAYER));
+		comButton.setActive(b.nonePickedUp() && (CURRENT_MOVE == LConstants.MOVE_NEUTRAL || b.playerMoved()) && playerMoved);
+		undoButton.setActive(b.nonePickedUp() && b.playerMoved());
 		comButton.display();
 		undoButton.display();
 	}
@@ -103,14 +112,13 @@ public class LGameManager {
 	public void keyInput(char key) {
 		if (CURRENT_PLAYER == LConstants.GAME_OVER && key == LConstants.RESET_KEY) {
 			resetGame();
-			b.resetBoard();
 		}
 		b.modifyPiece(key);
 	}
 	
 	private void resetGame() {
-		CURRENT_PLAYER = LConstants.PLAYER_1;
-		CURRENT_MOVE = LConstants.MOVE_PLAYER;
-		playerWon = LConstants.GAME_OVER;
+		initVars();
+		b.resetBoard();
+		b.setPlayerAndMove(CURRENT_PLAYER, CURRENT_MOVE);
 	}
 }
