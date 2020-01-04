@@ -12,6 +12,7 @@ public class LGameManager {
 	private int CURRENT_PLAYER;
 	private int CURRENT_MOVE;
 	private boolean playerMoved;
+	private int playerWon;
 	
 	public LGameManager(PApplet p) {
 		this.p = p;
@@ -53,8 +54,8 @@ public class LGameManager {
 			p.fill(dispColor);
 			p.text(moveText, LConstants.MOVE_STATUS_OFFSET_X + LConstants.PLAYER_STATUS_OFFSET_X, LConstants.PLAYER_STATUS_LINE_Y + LConstants.PLAYER_STATUS_OFFSET_Y);
 		} else {
-			String playerText = CURRENT_PLAYER == LConstants.PLAYER_2 ? "Player 1" : "Player 2";
-			int dispColor = CURRENT_PLAYER == LConstants.PLAYER_2 ? LConstants.PLAYER_1_COLOR : LConstants.PLAYER_2_COLOR;
+			String playerText = "Player " + (playerWon + 1);
+			int dispColor = playerWon == LConstants.PLAYER_1 ? LConstants.PLAYER_1_COLOR : LConstants.PLAYER_2_COLOR;
 			p.textAlign(PConstants.LEFT);
 			p.fill(dispColor);
 			p.textFont(font);
@@ -77,9 +78,11 @@ public class LGameManager {
 			CURRENT_MOVE = Math.abs(CURRENT_MOVE - 1);
 			if (CURRENT_MOVE == 0) {
 				CURRENT_PLAYER = Math.abs(CURRENT_PLAYER - 1);
+				System.out.println(CURRENT_PLAYER);
 				b.savePlayer(CURRENT_PLAYER);
 				playerMoved = false;
 				if (!b.playerCanWin(CURRENT_PLAYER)) {
+					playerWon = CURRENT_PLAYER == LConstants.PLAYER_2 ? LConstants.PLAYER_1 : LConstants.PLAYER_2;	
 					CURRENT_PLAYER = LConstants.GAME_OVER;
 					CURRENT_MOVE = LConstants.GAME_OVER;
 				}
@@ -108,5 +111,6 @@ public class LGameManager {
 	private void resetGame() {
 		CURRENT_PLAYER = LConstants.PLAYER_1;
 		CURRENT_MOVE = LConstants.MOVE_PLAYER;
+		playerWon = LConstants.GAME_OVER;
 	}
 }
