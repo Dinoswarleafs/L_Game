@@ -344,7 +344,6 @@ public class Board {
 	private boolean searchPiecesToRemove(Piece[] pieces, Point tgt) {
 		for (int i = 0; i < pieces.length; i++) {
 			for (Point pt : pieces[i].getPoints()) {
-				System.out.println("HERE");
 				if (pt.equals(tgt) && (checkPieceTurn(pieces[i]))) {
 					currPicked = pieces[i];
 					if (pieces[i].getSpace() == LConstants.NEUTRAL_SPACE) {
